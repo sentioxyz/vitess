@@ -150,6 +150,8 @@ func VisitSQLNode(in SQLNode, f Visit) error {
 		return VisitRefOfDropTable(in, f)
 	case *DropView:
 		return VisitRefOfDropView(in, f)
+	case *Except:
+		return VisitRefOfExcept(in, f)
 	case *ExecuteStmt:
 		return VisitRefOfExecuteStmt(in, f)
 	case *ExistsExpr:
@@ -1464,6 +1466,33 @@ func VisitRefOfDropView(in *DropView, f Visit) error {
 		return err
 	}
 	if err := VisitRefOfParsedComments(in.Comments, f); err != nil {
+		return err
+	}
+	return nil
+}
+func VisitRefOfExcept(in *Except, f Visit) error {
+	if in == nil {
+		return nil
+	}
+	if cont, err := f(in); err != nil || !cont {
+		return err
+	}
+	if err := VisitSelectStatement(in.Left, f); err != nil {
+		return err
+	}
+	if err := VisitSelectStatement(in.Right, f); err != nil {
+		return err
+	}
+	if err := VisitOrderBy(in.OrderBy, f); err != nil {
+		return err
+	}
+	if err := VisitRefOfWith(in.With, f); err != nil {
+		return err
+	}
+	if err := VisitRefOfLimit(in.Limit, f); err != nil {
+		return err
+	}
+	if err := VisitRefOfSelectInto(in.Into, f); err != nil {
 		return err
 	}
 	return nil
@@ -4995,6 +5024,8 @@ func VisitInsertRows(in InsertRows, f Visit) error {
 		return nil
 	}
 	switch in := in.(type) {
+	case *Except:
+		return VisitRefOfExcept(in, f)
 	case *Select:
 		return VisitRefOfSelect(in, f)
 	case *Union:
@@ -5027,6 +5058,8 @@ func VisitSelectStatement(in SelectStatement, f Visit) error {
 		return nil
 	}
 	switch in := in.(type) {
+	case *Except:
+		return VisitRefOfExcept(in, f)
 	case *Select:
 		return VisitRefOfSelect(in, f)
 	case *Union:
@@ -5105,6 +5138,8 @@ func VisitStatement(in Statement, f Visit) error {
 		return VisitRefOfDropTable(in, f)
 	case *DropView:
 		return VisitRefOfDropView(in, f)
+	case *Except:
+		return VisitRefOfExcept(in, f)
 	case *ExecuteStmt:
 		return VisitRefOfExecuteStmt(in, f)
 	case *ExplainStmt:

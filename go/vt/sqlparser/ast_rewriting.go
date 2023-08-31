@@ -350,6 +350,8 @@ func (er *astRewriter) rewriteUp(cursor *Cursor) bool {
 	switch node := cursor.Node().(type) {
 	case *Union:
 		er.rewriteUnion(node)
+	case *Except:
+		er.rewriteExcept(node)
 	case *FuncExpr:
 		er.funcRewrite(cursor, node)
 	case *Variable:
@@ -371,6 +373,13 @@ func (er *astRewriter) rewriteUp(cursor *Cursor) bool {
 }
 
 func (er *astRewriter) rewriteUnion(node *Union) {
+	// set select limit if explicitly not set when sql_select_limit is set on the connection.
+	if er.selectLimit > 0 && node.Limit == nil {
+		node.Limit = &Limit{Rowcount: NewIntLiteral(strconv.Itoa(er.selectLimit))}
+	}
+}
+
+func (er *astRewriter) rewriteExcept(node *Except) {
 	// set select limit if explicitly not set when sql_select_limit is set on the connection.
 	if er.selectLimit > 0 && node.Limit == nil {
 		node.Limit = &Limit{Rowcount: NewIntLiteral(strconv.Itoa(er.selectLimit))}

@@ -1220,9 +1220,81 @@ func (node *Union) GetParsedComments() *ParsedComments {
 	return node.Left.GetParsedComments()
 }
 
+// AddOrder adds an order by element
+func (node *Except) AddOrder(order *Order) {
+	node.OrderBy = append(node.OrderBy, order)
+}
+
+// SetOrderBy sets the order by clause
+func (node *Except) SetOrderBy(orderBy OrderBy) {
+	node.OrderBy = orderBy
+}
+
+// GetOrderBy gets the order by clause
+func (node *Except) GetOrderBy() OrderBy {
+	return node.OrderBy
+}
+
+// SetLimit sets the limit clause
+func (node *Except) SetLimit(limit *Limit) {
+	node.Limit = limit
+}
+
+// GetLimit gets the limit
+func (node *Except) GetLimit() *Limit {
+	return node.Limit
+}
+
+// GetColumns gets the columns
+func (node *Except) GetColumns() SelectExprs {
+	return node.Left.GetColumns()
+}
+
+// SetLock sets the lock clause
+func (node *Except) SetLock(lock Lock) {
+	node.Lock = lock
+}
+
+// SetInto sets the into clause
+func (node *Except) SetInto(into *SelectInto) {
+	node.Into = into
+}
+
+// SetWith sets the with clause to a union statement
+func (node *Except) SetWith(with *With) {
+	node.With = with
+}
+
+// MakeDistinct implements the SelectStatement interface
+func (node *Except) MakeDistinct() {
+	node.Distinct = true
+}
+
+// IsDistinct implements the SelectStatement interface
+func (node *Except) IsDistinct() bool {
+	return node.Distinct
+}
+
+// GetColumnCount implements the SelectStatement interface
+func (node *Except) GetColumnCount() int {
+	return node.Left.GetColumnCount()
+}
+
+// SetComments implements the SelectStatement interface
+func (node *Except) SetComments(comments Comments) {
+	node.Left.SetComments(comments)
+}
+
+// GetParsedComments implements the SelectStatement interface
+func (node *Except) GetParsedComments() *ParsedComments {
+	return node.Left.GetParsedComments()
+}
+
 func requiresParen(stmt SelectStatement) bool {
 	switch node := stmt.(type) {
 	case *Union:
+		return len(node.OrderBy) != 0 || node.Lock != 0 || node.Into != nil || node.Limit != nil
+	case *Except:
 		return len(node.OrderBy) != 0 || node.Lock != 0 || node.Into != nil || node.Limit != nil
 	case *Select:
 		return len(node.OrderBy) != 0 || node.Lock != 0 || node.Into != nil || node.Limit != nil

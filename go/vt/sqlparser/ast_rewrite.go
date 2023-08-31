@@ -150,6 +150,8 @@ func (a *application) rewriteSQLNode(parent SQLNode, node SQLNode, replacer repl
 		return a.rewriteRefOfDropTable(parent, node, replacer)
 	case *DropView:
 		return a.rewriteRefOfDropView(parent, node, replacer)
+	case *Except:
+		return a.rewriteRefOfExcept(parent, node, replacer)
 	case *ExecuteStmt:
 		return a.rewriteRefOfExecuteStmt(parent, node, replacer)
 	case *ExistsExpr:
@@ -2519,6 +2521,58 @@ func (a *application) rewriteRefOfDropView(parent SQLNode, node *DropView, repla
 	}
 	if !a.rewriteRefOfParsedComments(node, node.Comments, func(newNode, parent SQLNode) {
 		parent.(*DropView).Comments = newNode.(*ParsedComments)
+	}) {
+		return false
+	}
+	if a.post != nil {
+		a.cur.replacer = replacer
+		a.cur.parent = parent
+		a.cur.node = node
+		if !a.post(&a.cur) {
+			return false
+		}
+	}
+	return true
+}
+func (a *application) rewriteRefOfExcept(parent SQLNode, node *Except, replacer replacerFunc) bool {
+	if node == nil {
+		return true
+	}
+	if a.pre != nil {
+		a.cur.replacer = replacer
+		a.cur.parent = parent
+		a.cur.node = node
+		if !a.pre(&a.cur) {
+			return true
+		}
+	}
+	if !a.rewriteSelectStatement(node, node.Left, func(newNode, parent SQLNode) {
+		parent.(*Except).Left = newNode.(SelectStatement)
+	}) {
+		return false
+	}
+	if !a.rewriteSelectStatement(node, node.Right, func(newNode, parent SQLNode) {
+		parent.(*Except).Right = newNode.(SelectStatement)
+	}) {
+		return false
+	}
+	if !a.rewriteOrderBy(node, node.OrderBy, func(newNode, parent SQLNode) {
+		parent.(*Except).OrderBy = newNode.(OrderBy)
+	}) {
+		return false
+	}
+	if !a.rewriteRefOfWith(node, node.With, func(newNode, parent SQLNode) {
+		parent.(*Except).With = newNode.(*With)
+	}) {
+		return false
+	}
+	if !a.rewriteRefOfLimit(node, node.Limit, func(newNode, parent SQLNode) {
+		parent.(*Except).Limit = newNode.(*Limit)
+	}) {
+		return false
+	}
+	if !a.rewriteRefOfSelectInto(node, node.Into, func(newNode, parent SQLNode) {
+		parent.(*Except).Into = newNode.(*SelectInto)
 	}) {
 		return false
 	}
@@ -9610,6 +9664,8 @@ func (a *application) rewriteInsertRows(parent SQLNode, node InsertRows, replace
 		return true
 	}
 	switch node := node.(type) {
+	case *Except:
+		return a.rewriteRefOfExcept(parent, node, replacer)
 	case *Select:
 		return a.rewriteRefOfSelect(parent, node, replacer)
 	case *Union:
@@ -9642,6 +9698,8 @@ func (a *application) rewriteSelectStatement(parent SQLNode, node SelectStatemen
 		return true
 	}
 	switch node := node.(type) {
+	case *Except:
+		return a.rewriteRefOfExcept(parent, node, replacer)
 	case *Select:
 		return a.rewriteRefOfSelect(parent, node, replacer)
 	case *Union:
@@ -9720,6 +9778,8 @@ func (a *application) rewriteStatement(parent SQLNode, node Statement, replacer 
 		return a.rewriteRefOfDropTable(parent, node, replacer)
 	case *DropView:
 		return a.rewriteRefOfDropView(parent, node, replacer)
+	case *Except:
+		return a.rewriteRefOfExcept(parent, node, replacer)
 	case *ExecuteStmt:
 		return a.rewriteRefOfExecuteStmt(parent, node, replacer)
 	case *ExplainStmt:

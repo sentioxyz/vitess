@@ -115,6 +115,28 @@ func (node *Union) formatFast(buf *TrackedBuffer) {
 	buf.WriteString(node.Lock.ToString())
 }
 
+func (node *Except) formatFast(buf *TrackedBuffer) {
+	if requiresParen(node.Left) {
+		buf.WriteByte('(')
+		node.Left.formatFast(buf)
+		buf.WriteByte(')')
+	} else {
+		node.Left.formatFast(buf)
+	}
+
+	buf.WriteByte(' ')
+	buf.WriteString(ExceptStr)
+	buf.WriteByte(' ')
+
+	if requiresParen(node.Right) {
+		buf.WriteByte('(')
+		node.Right.formatFast(buf)
+		buf.WriteByte(')')
+	} else {
+		node.Right.formatFast(buf)
+	}
+}
+
 // formatFast formats the node.
 func (node *VStream) formatFast(buf *TrackedBuffer) {
 	buf.WriteString("vstream ")

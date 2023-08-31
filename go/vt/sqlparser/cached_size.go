@@ -1220,6 +1220,37 @@ func (cached *DropView) CachedSize(alloc bool) int64 {
 	size += cached.Comments.CachedSize(true)
 	return size
 }
+func (cached *Except) CachedSize(alloc bool) int64 {
+	if cached == nil {
+		return int64(0)
+	}
+	size := int64(0)
+	if alloc {
+		size += int64(96)
+	}
+	// field Left vitess.io/vitess/go/vt/sqlparser.SelectStatement
+	if cc, ok := cached.Left.(cachedObject); ok {
+		size += cc.CachedSize(true)
+	}
+	// field Right vitess.io/vitess/go/vt/sqlparser.SelectStatement
+	if cc, ok := cached.Right.(cachedObject); ok {
+		size += cc.CachedSize(true)
+	}
+	// field OrderBy vitess.io/vitess/go/vt/sqlparser.OrderBy
+	{
+		size += hack.RuntimeAllocSize(int64(cap(cached.OrderBy)) * int64(8))
+		for _, elem := range cached.OrderBy {
+			size += elem.CachedSize(true)
+		}
+	}
+	// field With *vitess.io/vitess/go/vt/sqlparser.With
+	size += cached.With.CachedSize(true)
+	// field Limit *vitess.io/vitess/go/vt/sqlparser.Limit
+	size += cached.Limit.CachedSize(true)
+	// field Into *vitess.io/vitess/go/vt/sqlparser.SelectInto
+	size += cached.Into.CachedSize(true)
+	return size
+}
 func (cached *ExecuteStmt) CachedSize(alloc bool) int64 {
 	if cached == nil {
 		return int64(0)

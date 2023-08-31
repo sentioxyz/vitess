@@ -97,6 +97,24 @@ func (node *Union) Format(buf *TrackedBuffer) {
 	buf.astPrintf(node, "%v%v%s", node.OrderBy, node.Limit, node.Lock.ToString())
 }
 
+func (node *Except) Format(buf *TrackedBuffer) {
+	if requiresParen(node.Left) {
+		buf.astPrintf(node, "(%v)", node.Left)
+	} else {
+		buf.astPrintf(node, "%v", node.Left)
+	}
+
+	buf.WriteByte(' ')
+	buf.literal(ExceptStr)
+	buf.WriteByte(' ')
+
+	if requiresParen(node.Right) {
+		buf.astPrintf(node, "(%v)", node.Right)
+	} else {
+		buf.astPrintf(node, "%v", node.Right)
+	}
+}
+
 // Format formats the node.
 func (node *VStream) Format(buf *TrackedBuffer) {
 	buf.astPrintf(node, "vstream %v%v from %v",

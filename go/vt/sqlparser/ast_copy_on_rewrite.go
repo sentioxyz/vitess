@@ -150,6 +150,8 @@ func (c *cow) copyOnRewriteSQLNode(n SQLNode, parent SQLNode) (out SQLNode, chan
 		return c.copyOnRewriteRefOfDropTable(n, parent)
 	case *DropView:
 		return c.copyOnRewriteRefOfDropView(n, parent)
+	case *Except:
+		return c.copyOnRewriteRefOfExcept(n, parent)
 	case *ExecuteStmt:
 		return c.copyOnRewriteRefOfExecuteStmt(n, parent)
 	case *ExistsExpr:
@@ -1984,6 +1986,38 @@ func (c *cow) copyOnRewriteRefOfDropView(n *DropView, parent SQLNode) (out SQLNo
 			res := *n
 			res.FromTables, _ = _FromTables.(TableNames)
 			res.Comments, _ = _Comments.(*ParsedComments)
+			out = &res
+			if c.cloned != nil {
+				c.cloned(n, out)
+			}
+			changed = true
+		}
+	}
+	if c.post != nil {
+		out, changed = c.postVisit(out, parent, changed)
+	}
+	return
+}
+func (c *cow) copyOnRewriteRefOfExcept(n *Except, parent SQLNode) (out SQLNode, changed bool) {
+	if n == nil || c.cursor.stop {
+		return n, false
+	}
+	out = n
+	if c.pre == nil || c.pre(n, parent) {
+		_Left, changedLeft := c.copyOnRewriteSelectStatement(n.Left, n)
+		_Right, changedRight := c.copyOnRewriteSelectStatement(n.Right, n)
+		_OrderBy, changedOrderBy := c.copyOnRewriteOrderBy(n.OrderBy, n)
+		_With, changedWith := c.copyOnRewriteRefOfWith(n.With, n)
+		_Limit, changedLimit := c.copyOnRewriteRefOfLimit(n.Limit, n)
+		_Into, changedInto := c.copyOnRewriteRefOfSelectInto(n.Into, n)
+		if changedLeft || changedRight || changedOrderBy || changedWith || changedLimit || changedInto {
+			res := *n
+			res.Left, _ = _Left.(SelectStatement)
+			res.Right, _ = _Right.(SelectStatement)
+			res.OrderBy, _ = _OrderBy.(OrderBy)
+			res.With, _ = _With.(*With)
+			res.Limit, _ = _Limit.(*Limit)
+			res.Into, _ = _Into.(*SelectInto)
 			out = &res
 			if c.cloned != nil {
 				c.cloned(n, out)
@@ -7237,6 +7271,8 @@ func (c *cow) copyOnRewriteInsertRows(n InsertRows, parent SQLNode) (out SQLNode
 		return n, false
 	}
 	switch n := n.(type) {
+	case *Except:
+		return c.copyOnRewriteRefOfExcept(n, parent)
 	case *Select:
 		return c.copyOnRewriteRefOfSelect(n, parent)
 	case *Union:
@@ -7269,6 +7305,8 @@ func (c *cow) copyOnRewriteSelectStatement(n SelectStatement, parent SQLNode) (o
 		return n, false
 	}
 	switch n := n.(type) {
+	case *Except:
+		return c.copyOnRewriteRefOfExcept(n, parent)
 	case *Select:
 		return c.copyOnRewriteRefOfSelect(n, parent)
 	case *Union:
@@ -7347,6 +7385,8 @@ func (c *cow) copyOnRewriteStatement(n Statement, parent SQLNode) (out SQLNode, 
 		return c.copyOnRewriteRefOfDropTable(n, parent)
 	case *DropView:
 		return c.copyOnRewriteRefOfDropView(n, parent)
+	case *Except:
+		return c.copyOnRewriteRefOfExcept(n, parent)
 	case *ExecuteStmt:
 		return c.copyOnRewriteRefOfExecuteStmt(n, parent)
 	case *ExplainStmt:

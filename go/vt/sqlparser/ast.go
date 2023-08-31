@@ -302,6 +302,17 @@ type (
 		Into     *SelectInto
 	}
 
+	Except struct {
+		Left     SelectStatement
+		Right    SelectStatement
+		Distinct bool
+		OrderBy  OrderBy
+		With     *With
+		Limit    *Limit
+		Lock     Lock
+		Into     *SelectInto
+	}
+
 	// VStream represents a VSTREAM statement.
 	VStream struct {
 		Comments   *ParsedComments
@@ -708,6 +719,7 @@ type (
 )
 
 func (*Union) iStatement()               {}
+func (*Except) iStatement()              {}
 func (*Select) iStatement()              {}
 func (*Stream) iStatement()              {}
 func (*VStream) iStatement()             {}
@@ -730,6 +742,7 @@ func (*OtherAdmin) iStatement()          {}
 func (*CommentOnly) iStatement()         {}
 func (*Select) iSelectStatement()        {}
 func (*Union) iSelectStatement()         {}
+func (*Except) iSelectStatement()        {}
 func (*Load) iStatement()                {}
 func (*CreateDatabase) iStatement()      {}
 func (*AlterDatabase) iStatement()       {}
@@ -801,6 +814,7 @@ func (*Update) iSupportOptimizerHint()  {}
 func (*VStream) iSupportOptimizerHint() {}
 func (*Select) iSupportOptimizerHint()  {}
 func (*Union) iSupportOptimizerHint()   {}
+func (*Except) iSupportOptimizerHint()  {}
 
 // IsFullyParsed implements the DDLStatement interface
 func (*TruncateTable) IsFullyParsed() bool {
@@ -1668,6 +1682,7 @@ type InsertRows interface {
 
 func (*Select) iInsertRows() {}
 func (*Union) iInsertRows()  {}
+func (*Except) iInsertRows() {}
 func (Values) iInsertRows()  {}
 
 // OptLike works for create table xxx like xxx

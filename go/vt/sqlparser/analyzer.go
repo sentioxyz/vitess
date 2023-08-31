@@ -68,7 +68,7 @@ const (
 // ASTToStatementType returns a StatementType from an AST stmt
 func ASTToStatementType(stmt Statement) StatementType {
 	switch stmt.(type) {
-	case *Select, *Union:
+	case *Select, *Union, *Except:
 		return StmtSelect
 	case *Insert:
 		return StmtInsert
@@ -134,7 +134,7 @@ func ASTToStatementType(stmt Statement) StatementType {
 // CanNormalize takes Statement and returns if the statement can be normalized.
 func CanNormalize(stmt Statement) bool {
 	switch stmt.(type) {
-	case *Select, *Union, *Insert, *Update, *Delete, *Set, *CallProc, *Stream: // TODO: we could merge this logic into ASTrewriter
+	case *Select, *Union, *Except, *Insert, *Update, *Delete, *Set, *CallProc, *Stream: // TODO: we could merge this logic into ASTrewriter
 		return true
 	}
 	return false
@@ -152,7 +152,7 @@ func CachePlan(stmt Statement) bool {
 		comments = stmt.Comments
 	case *Delete:
 		comments = stmt.Comments
-	case *Union, *Stream:
+	case *Union, *Stream, *Except:
 		return true
 	default:
 		return false

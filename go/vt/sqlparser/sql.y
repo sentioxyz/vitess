@@ -226,7 +226,7 @@ func markBindVariable(yylex yyLexer, bvar string) {
 %nonassoc <str> STRING_TYPE_PREFIX_NON_KEYWORD
 
 %token LEX_ERROR
-%left <str> UNION
+%left <str> UNION EXCEPT
 %token <str> SELECT STREAM VSTREAM INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT OFFSET FOR
 %token <str> ALL DISTINCT AS EXISTS ASC DESC INTO DUPLICATE DEFAULT SET LOCK UNLOCK KEYS DO CALL
 %token <str> DISTINCTROW PARSER GENERATED ALWAYS
@@ -365,7 +365,7 @@ func markBindVariable(yylex yyLexer, bvar string) {
 %token <str> MATCH AGAINST BOOLEAN LANGUAGE WITH QUERY EXPANSION WITHOUT VALIDATION
 
 // MySQL reserved words that are unused by this grammar will map to this token.
-%token <str> UNUSED ARRAY BYTE CUME_DIST DESCRIPTION DENSE_RANK EMPTY EXCEPT FIRST_VALUE GROUPING GROUPS JSON_TABLE LAG LAST_VALUE LATERAL LEAD
+%token <str> UNUSED ARRAY BYTE CUME_DIST DESCRIPTION DENSE_RANK EMPTY FIRST_VALUE GROUPING GROUPS JSON_TABLE LAG LAST_VALUE LATERAL LEAD
 %token <str> NTH_VALUE NTILE OF OVER PERCENT_RANK RANK RECURSIVE ROW_NUMBER SYSTEM WINDOW
 %token <str> ACTIVE ADMIN AUTOEXTEND_SIZE BUCKETS CLONE COLUMN_FORMAT COMPONENT DEFINITION ENFORCED ENGINE_ATTRIBUTE EXCLUDE FOLLOWING GET_MASTER_PUBLIC_KEY HISTOGRAM HISTORY
 %token <str> INACTIVE INVISIBLE LOCKED MASTER_COMPRESSION_ALGORITHMS MASTER_PUBLIC_KEY_PATH MASTER_TLS_CIPHERSUITES MASTER_ZSTD_COMPRESSION_LEVEL
@@ -456,7 +456,7 @@ func markBindVariable(yylex yyLexer, bvar string) {
 %type <intervalType> interval timestampadd_interval
 %type <str> cache_opt separator_opt flush_option for_channel_opt maxvalue
 %type <matchExprOption> match_option
-%type <boolean> distinct_opt union_op replace_opt local_opt
+%type <boolean> distinct_opt union_op except_op replace_opt local_opt
 %type <selectExprs> select_expression_list select_expression_list_opt
 %type <selectExpr> select_expression
 %type <strs> select_options flush_option_list
@@ -833,6 +833,10 @@ query_expression_body:
 | query_expression_parens union_op query_expression_parens
   {
 	$$ = &Union{Left: $1, Distinct: $2, Right: $3}
+  }
+| query_expression_body except_op query_primary
+  {
+ 	$$ = &Except{Left: $1, Distinct: $2, Right: $3}
   }
 
 select_statement:
@@ -4699,6 +4703,12 @@ union_op:
     $$ = true
   }
 
+except_op:
+  EXCEPT
+  {
+    $$ = true
+  }
+
 cache_opt:
 {
   $$ = ""
@@ -8042,6 +8052,7 @@ reserved_keyword:
 | TRAILING
 | TRUE
 | UNION
+| EXCEPT
 | UNIQUE
 | UNLOCK
 | UPDATE

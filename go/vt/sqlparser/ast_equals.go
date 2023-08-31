@@ -410,6 +410,12 @@ func (cmp *Comparator) SQLNode(inA, inB SQLNode) bool {
 			return false
 		}
 		return cmp.RefOfDropView(a, b)
+	case *Except:
+		b, ok := inB.(*Except)
+		if !ok {
+			return false
+		}
+		return cmp.RefOfExcept(a, b)
 	case *ExecuteStmt:
 		b, ok := inB.(*ExecuteStmt)
 		if !ok {
@@ -2437,6 +2443,24 @@ func (cmp *Comparator) RefOfDropView(a, b *DropView) bool {
 	return a.IfExists == b.IfExists &&
 		cmp.TableNames(a.FromTables, b.FromTables) &&
 		cmp.RefOfParsedComments(a.Comments, b.Comments)
+}
+
+// RefOfExcept does deep equals between the two objects.
+func (cmp *Comparator) RefOfExcept(a, b *Except) bool {
+	if a == b {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return a.Distinct == b.Distinct &&
+		cmp.SelectStatement(a.Left, b.Left) &&
+		cmp.SelectStatement(a.Right, b.Right) &&
+		cmp.OrderBy(a.OrderBy, b.OrderBy) &&
+		cmp.RefOfWith(a.With, b.With) &&
+		cmp.RefOfLimit(a.Limit, b.Limit) &&
+		a.Lock == b.Lock &&
+		cmp.RefOfSelectInto(a.Into, b.Into)
 }
 
 // RefOfExecuteStmt does deep equals between the two objects.
@@ -6599,6 +6623,12 @@ func (cmp *Comparator) InsertRows(inA, inB InsertRows) bool {
 		return false
 	}
 	switch a := inA.(type) {
+	case *Except:
+		b, ok := inB.(*Except)
+		if !ok {
+			return false
+		}
+		return cmp.RefOfExcept(a, b)
 	case *Select:
 		b, ok := inB.(*Select)
 		if !ok {
@@ -6665,6 +6695,12 @@ func (cmp *Comparator) SelectStatement(inA, inB SelectStatement) bool {
 		return false
 	}
 	switch a := inA.(type) {
+	case *Except:
+		b, ok := inB.(*Except)
+		if !ok {
+			return false
+		}
+		return cmp.RefOfExcept(a, b)
 	case *Select:
 		b, ok := inB.(*Select)
 		if !ok {
@@ -6854,6 +6890,12 @@ func (cmp *Comparator) Statement(inA, inB Statement) bool {
 			return false
 		}
 		return cmp.RefOfDropView(a, b)
+	case *Except:
+		b, ok := inB.(*Except)
+		if !ok {
+			return false
+		}
+		return cmp.RefOfExcept(a, b)
 	case *ExecuteStmt:
 		b, ok := inB.(*ExecuteStmt)
 		if !ok {

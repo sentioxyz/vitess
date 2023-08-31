@@ -40,6 +40,9 @@ const (
 	UnionAllStr      = "union all"
 	UnionDistinctStr = "union distinct"
 
+	// Except.Type
+	ExceptStr = "except"
+
 	// DDL strings.
 	InsertStr  = "insert"
 	ReplaceStr = "replace"
