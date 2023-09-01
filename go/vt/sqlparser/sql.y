@@ -268,7 +268,7 @@ func markBindVariable(yylex yyLexer, bvar string) {
 %left <str> AND
 %right <str> NOT '!'
 %left <str> BETWEEN CASE WHEN THEN ELSE END
-%left <str> '=' '<' '>' LE GE NE NULL_SAFE_EQUAL IS LIKE REGEXP RLIKE IN ASSIGNMENT_OPT
+%left <str> '=' '<' '>' LE GE NE NULL_SAFE_EQUAL IS LIKE ILIKE REGEXP RLIKE IN ASSIGNMENT_OPT
 %left <str> '&'
 %left <str> SHIFT_LEFT SHIFT_RIGHT
 %left <str> '+' '-'
@@ -835,6 +835,18 @@ query_expression_body:
 	$$ = &Union{Left: $1, Distinct: $2, Right: $3}
   }
 | query_expression_body except_op query_primary
+  {
+ 	$$ = &Except{Left: $1, Distinct: $2, Right: $3}
+  }
+| query_expression_parens except_op query_primary
+  {
+ 	$$ = &Except{Left: $1, Distinct: $2, Right: $3}
+  }
+| query_expression_body except_op query_expression_parens
+  {
+ 	$$ = &Except{Left: $1, Distinct: $2, Right: $3}
+  }
+| query_expression_parens except_op query_expression_parens
   {
  	$$ = &Except{Left: $1, Distinct: $2, Right: $3}
   }
@@ -4706,6 +4718,10 @@ union_op:
 except_op:
   EXCEPT
   {
+    $$ = false
+  }
+| EXCEPT DISTINCT
+  {
     $$ = true
   }
 
@@ -5310,6 +5326,22 @@ bit_expr IN col_tuple
 | bit_expr NOT LIKE simple_expr ESCAPE simple_expr %prec LIKE
   {
 	$$ = &ComparisonExpr{Left: $1, Operator: NotLikeOp, Right: $4, Escape: $6}
+  }
+| bit_expr ILIKE simple_expr
+  {
+	  $$ = &ComparisonExpr{Left: $1, Operator: ILikeOp, Right: $3}
+  }
+| bit_expr NOT ILIKE simple_expr
+  {
+	$$ = &ComparisonExpr{Left: $1, Operator: NotILikeOp, Right: $4}
+  }
+| bit_expr ILIKE simple_expr ESCAPE simple_expr %prec ILIKE
+  {
+	  $$ = &ComparisonExpr{Left: $1, Operator: ILikeOp, Right: $3, Escape: $5}
+  }
+| bit_expr NOT ILIKE simple_expr ESCAPE simple_expr %prec ILIKE
+  {
+	$$ = &ComparisonExpr{Left: $1, Operator: NotILikeOp, Right: $4, Escape: $6}
   }
 | bit_expr regexp_symbol bit_expr
   {

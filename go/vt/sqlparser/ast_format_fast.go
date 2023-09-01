@@ -125,7 +125,11 @@ func (node *Except) formatFast(buf *TrackedBuffer) {
 	}
 
 	buf.WriteByte(' ')
-	buf.WriteString(ExceptStr)
+	if node.Distinct {
+		buf.WriteString(ExceptDistinctStr)
+	} else {
+		buf.WriteString(ExceptStr)
+	}
 	buf.WriteByte(' ')
 
 	if requiresParen(node.Right) {

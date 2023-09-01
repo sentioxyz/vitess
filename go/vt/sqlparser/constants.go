@@ -41,7 +41,8 @@ const (
 	UnionDistinctStr = "union distinct"
 
 	// Except.Type
-	ExceptStr = "except"
+	ExceptStr         = "except"
+	ExceptDistinctStr = "except distinct"
 
 	// DDL strings.
 	InsertStr  = "insert"
@@ -660,6 +661,8 @@ const (
 	NotLikeOp
 	RegexpOp
 	NotRegexpOp
+	ILikeOp
+	NotILikeOp
 )
 
 // Constant for Enum Type - IsExprOperator
