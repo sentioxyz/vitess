@@ -147,6 +147,8 @@ const (
 	NotLikeStr       = "not like"
 	RegexpStr        = "regexp"
 	NotRegexpStr     = "not regexp"
+	ILikeStr         = "ilike"
+	NotILikeStr      = "not ilke"
 
 	// IsExpr.Operator
 	IsNullStr     = "is null"
