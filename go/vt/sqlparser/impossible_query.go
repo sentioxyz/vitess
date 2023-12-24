@@ -46,7 +46,7 @@ func FormatImpossibleQuery(buf *TrackedBuffer, node SQLNode) {
 
 		buf.WriteString(" ")
 		if node.Distinct {
-			buf.WriteString(UnionStr)
+			buf.WriteString(UnionDistinctStr)
 		} else {
 			buf.WriteString(UnionAllStr)
 		}

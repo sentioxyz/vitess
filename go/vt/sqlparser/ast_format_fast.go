@@ -96,7 +96,7 @@ func (node *Union) formatFast(buf *TrackedBuffer) {
 
 	buf.WriteByte(' ')
 	if node.Distinct {
-		buf.WriteString(UnionStr)
+		buf.WriteString(UnionDistinctStr)
 	} else {
 		buf.WriteString(UnionAllStr)
 	}

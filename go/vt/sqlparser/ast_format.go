@@ -82,7 +82,7 @@ func (node *Union) Format(buf *TrackedBuffer) {
 
 	buf.WriteByte(' ')
 	if node.Distinct {
-		buf.literal(UnionStr)
+		buf.literal(UnionDistinctStr)
 	} else {
 		buf.literal(UnionAllStr)
 	}
